@@ -67,7 +67,6 @@ Um aplicativo Flutter para explorar filmes populares, gerenciar favoritos e desc
 lib/
 ├── core/
 │   ├── utils/            # Utilitários e widgets
-│   └── viewmodels/       # Lógica de apresentação
 ├── models/               # Modelos de dados
 ├── services/             # Serviços externos
 ├── repositories/         # Camada de acesso a dados
