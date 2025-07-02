@@ -15,7 +15,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<MovieViewModel>(context, listen: false).loadFavoriteMovies();
+      Provider.of<MovieViewModel>(context, listen: false).loadPopularMovies();
     });
   }
 
@@ -28,7 +28,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       body: Consumer<MovieViewModel>(
         builder: (context, viewModel, child) {
           // Exibe mensagem de "nenhum filme favorito" se a lista estiver vazia
-          if (viewModel.favoriteMovies.isEmpty) {
+          if (viewModel.state.popularMovies.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0), 
@@ -60,9 +60,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
           // Lista de filmes favoritos
           return ListView.builder(
-            itemCount: viewModel.favoriteMovies.length,
+            itemCount: viewModel.state.favoriteMovies.length,
             itemBuilder: (context, index) {
-              final movie = viewModel.favoriteMovies[index];
+              final movie = viewModel.state.favoriteMovies[index];
               return MovieListItem(movie: movie);
             },
           );

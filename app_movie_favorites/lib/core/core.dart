@@ -1,7 +1,7 @@
 import 'package:app_movie_favorites/core/utils/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../repositories/tmdb_repository.dart';
+import '../repositories/movie_repository.dart';
 
 import '../services/tmdb_services.dart';
 import '../viewmodels/movie_viewmodel.dart';
@@ -12,6 +12,7 @@ class Core extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  
 
     return MultiProvider(
       providers: [

@@ -1,91 +1,87 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../models/movie.dart'; // Assuming Movie model is defined here
+import '../models/movie.dart';
 
 class TMDBService {
-  final Dio _dio;
-  
-  // Private constructor
-  TMDBService._internal() : _dio = Dio() {
-    _dio.options.baseUrl = dotenv.env['API_URL']!;
-    _dio.options.queryParameters['api_key'] = dotenv.env['API_KEY']!;
-    _dio.options.queryParameters['language'] = 'pt-BR';
-  }
-
-  // Singleton instance
   static final TMDBService _instance = TMDBService._internal();
+  final Dio _dio;
+  final Map<String, dynamic> _cache = {};
 
-  // Factory constructor to return the singleton instance
-  factory TMDBService() {
-    return _instance;
+  factory TMDBService() => _instance;
+
+  TMDBService._internal()
+      : _dio = Dio(BaseOptions(
+          baseUrl: dotenv.env['API_URL']!,
+          queryParameters: {
+            'api_key': dotenv.env['API_KEY']!,
+            'language': 'pt-BR',
+          },
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 15),
+        )) {
+    _dio.interceptors.add(LogInterceptor(responseBody: false));
   }
 
-  /// Fetches a list of popular movies.
-  ///
-  /// [page] The page number to retrieve. Defaults to 1.
-  /// Returns a [Future] that completes with a list of [Movie] objects.
-  /// Throws a [DioException] if the request fails.
-  Future<List<Movie>> getPopularMovies({int page = 1}) async {
-    try {
-      final response = await _dio.get(
-        '/movie/popular',
-        queryParameters: {'page': page},
-      );
-      return _parseMovieList(response);
-    } on DioException catch (e) {
-      throw Exception('Failed to load popular movies: ${e.message}');
+  Future<Map<String, dynamic>> _getWithCache(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    final cacheKey = '$path?${query?.toString()}';
+    if (_cache.containsKey(cacheKey)) {
+      return _cache[cacheKey]!;
     }
-  }
 
-  /// Searches for movies based on a query.
-  ///
-  /// [query] The search query string.
-  /// [page] The page number to retrieve. Defaults to 1.
-  /// Returns a [Future] that completes with a list of [Movie] objects.
-  /// Throws a [DioException] if the request fails.
-  Future<List<Movie>> searchMovies(String query, {int page = 1}) async {
     try {
-      final response = await _dio.get(
-        '/search/movie',
-        queryParameters: {'query': query, 'page': page},
-      );
-      return _parseMovieList(response);
-    } on DioException catch (e) {
-      throw Exception('Failed to search movies: ${e.message}');
-    }
-  }
-
-  /// Fetches the details of a specific movie.
-  ///
-  /// [movieId] The ID of the movie to retrieve details for.
-  /// Returns a [Future] that completes with a [Map<String, dynamic>] containing movie details.
-  /// Throws a [DioException] if the request fails.
-  Future<Map<String, dynamic>> getMovieDetails(int movieId) async {
-    try {
-      final response = await _dio.get('/movie/$movieId');
+      final response = await _dio.get(path, queryParameters: query);
+      _cache[cacheKey] = response.data;
       return response.data;
     } on DioException catch (e) {
-      throw Exception('Failed to load movie details: ${e.message}');
+      throw TMDBException.fromDioError(e);
     }
   }
 
-  /// Fetches the videos associated with a specific movie.
-  ///
-  /// [movieId] The ID of the movie to retrieve videos for.
-  /// Returns a [Future] that completes with a list of [Map<String, dynamic>] representing video information.
-  /// Throws a [DioException] if the request fails.
+  Future<List<Movie>> getPopularMovies({int page = 1}) async {
+    final data = await _getWithCache('/movie/popular', query: {'page': page});
+    return _parseMovieList(data);
+  }
+
+  Future<List<Movie>> searchMovies(String query, {int page = 1}) async {
+    final data = await _getWithCache(
+      '/search/movie',
+      query: {'query': query, 'page': page},
+    );
+    return _parseMovieList(data);
+  }
+
+  Future<Map<String, dynamic>> getMovieDetails(int movieId) async {
+    return _getWithCache('/movie/$movieId');
+  }
+
   Future<List<Map<String, dynamic>>> getMovieVideos(int movieId) async {
-    try {
-      final response = await _dio.get('/movie/$movieId/videos');
-      final List<dynamic> results = response.data['results'] ?? [];
-      return results.cast<Map<String, dynamic>>();
-    } on DioException catch (e) {
-      throw Exception('Failed to load movie videos: ${e.message}');
-    }
+    final data = await _getWithCache('/movie/$movieId/videos');
+    return (data['results'] as List).cast<Map<String, dynamic>>();
   }
 
-  List<Movie> _parseMovieList(Response response) {
-    final List<dynamic> results = response.data['results'] ?? [];
-    return results.map((json) => Movie.fromJson(json)).toList();
+  List<Movie> _parseMovieList(Map<String, dynamic> data) {
+    return (data['results'] as List)
+        .map((json) => Movie.fromJson(json))
+        .toList();
   }
+}
+
+class TMDBException implements Exception {
+  final String message;
+  final int? statusCode;
+
+  TMDBException(this.message, {this.statusCode});
+
+  factory TMDBException.fromDioError(DioException e) {
+    return TMDBException(
+      e.response?.data['status_message'] ?? e.message ?? 'Unknown error',
+      statusCode: e.response?.statusCode,
+    );
+  }
+
+  @override
+  String toString() => 'TMDBException: $message${statusCode != null ? ' ($statusCode)' : ''}';
 }

@@ -1,9 +1,11 @@
 import 'package:hive/hive.dart';
+import 'package:equatable/equatable.dart';
 
 part 'movie.g.dart';
 
 @HiveType(typeId: 0)
-class Movie extends HiveObject {
+// ignore: must_be_immutable
+class Movie extends HiveObject with EquatableMixin {
   @HiveField(0)
   final int id;
   
@@ -41,14 +43,14 @@ class Movie extends HiveObject {
   
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
-      id: json['id'] ?? 0,
-      title: json['title'] ?? '',
-      overview: json['overview'] ?? '',
-      posterPath: json['poster_path'],
-      backdropPath: json['backdrop_path'],
-      releaseDate: json['release_date'] ?? '',
-      voteAverage: (json['vote_average'] ?? 0).toDouble(),
-      genreIds: List<int>.from(json['genre_ids'] ?? []),
+      id: json['id'] as int? ?? 0,
+      title: json['title'] as String? ?? 'Sem título',
+      overview: json['overview'] as String? ?? '',
+      posterPath: json['poster_path'] as String?,
+      backdropPath: json['backdrop_path'] as String?,
+      releaseDate: json['release_date'] as String? ?? 'Desconhecido',
+      voteAverage: (json['vote_average'] as num?)?.toDouble() ?? 0.0,
+      genreIds: (json['genre_ids'] as List<dynamic>?)?.cast<int>() ?? const [],
     );
   }
   
@@ -59,4 +61,29 @@ class Movie extends HiveObject {
   String get backdropUrl => backdropPath != null 
       ? 'https://image.tmdb.org/t/p/w780$backdropPath'
       : '';
+
+  Movie copyWith({
+    int? id,
+    String? title,
+    String? overview,
+    String? posterPath,
+    String? backdropPath,
+    String? releaseDate,
+    double? voteAverage,
+    List<int>? genreIds,
+  }) {
+    return Movie(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      overview: overview ?? this.overview,
+      posterPath: posterPath ?? this.posterPath,
+      backdropPath: backdropPath ?? this.backdropPath,
+      releaseDate: releaseDate ?? this.releaseDate,
+      voteAverage: voteAverage ?? this.voteAverage,
+      genreIds: genreIds ?? this.genreIds,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id];
 }

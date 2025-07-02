@@ -44,12 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Consumer<MovieViewModel>(
         builder: (context, viewModel, child) {
           // Exibe um indicador de carregamento inicial se não houver dados ainda
-          if (viewModel.isLoading && viewModel.popularMovies.isEmpty) {
+          if (viewModel.state.isLoading && viewModel.state.popularMovies.isEmpty) {
             return const Center(child: CircularProgressIndicator()); 
           }
 
           // Exibe mensagem de erro se houver um erro e nenhuma lista de filmes
-          if (viewModel.errorMessage != null && viewModel.popularMovies.isEmpty) {
+          if (viewModel.state.errorMessage != null && viewModel.state.popularMovies.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0), 
@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 8), 
                     Text(
-                      viewModel.errorMessage!,
+                      viewModel.state.errorMessage!,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey[600]),
                     ),
@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           // Exibe mensagem de "nenhum filme encontrado" se a lista estiver vazia após carregamento
-          if (viewModel.popularMovies.isEmpty) {
+          if (viewModel.state.popularMovies.isEmpty) {
             return const Center( 
               child: Text('Nenhum filme encontrado.'), 
             );
@@ -97,8 +97,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Filme em destaque
-                  if (viewModel.featuredMovie != null)
-                    FeaturedMovieCard(movie: viewModel.featuredMovie!),
+                  if (viewModel.state.featuredMovie != null)
+                    FeaturedMovieCard(movie: viewModel.state.featuredMovie!),
 
                   const SizedBox(height: 24), 
 
@@ -121,9 +121,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16), 
-                      itemCount: viewModel.popularMovies.length,
+                      itemCount: viewModel.state.popularMovies.length,
                       itemBuilder: (context, index) {
-                        final movie = viewModel.popularMovies[index];
+                        final movie = viewModel.state.popularMovies[index];
                         return Padding(
                           padding: const EdgeInsets.only(right: 12), 
                           child: MovieCard(movie: movie),

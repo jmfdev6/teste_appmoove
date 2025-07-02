@@ -37,15 +37,15 @@ class _SearchScreenState extends State<SearchScreen> {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16), // Adicionado const
+              padding: const EdgeInsets.all(16), 
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Digite o nome do filme...',
-                  prefixIcon: const Icon(Icons.search), // Adicionado const
+                  prefixIcon: const Icon(Icons.search), 
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear), // Adicionado const
+                          icon: const Icon(Icons.clear), 
                           onPressed: () {
                             _searchController.clear();
                             // Limpa os resultados da pesquisa no ViewModel
@@ -72,8 +72,8 @@ class _SearchScreenState extends State<SearchScreen> {
             Expanded(
               child: Consumer<MovieViewModel>(
                 builder: (context, viewModel, child) {
-                  if (viewModel.isLoading) {
-                    return const Center(child: CircularProgressIndicator()); // Adicionado const
+                  if (viewModel.state.isLoading) {
+                    return const Center(child: CircularProgressIndicator()); 
                   }
       
                   // Mensagem para quando a caixa de pesquisa está vazia
@@ -82,8 +82,8 @@ class _SearchScreenState extends State<SearchScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.search, size: 64, color: Colors.grey), // Adicionado const
-                          const SizedBox(height: 16), // Adicionado const
+                          const Icon(Icons.search, size: 64, color: Colors.grey), 
+                          const SizedBox(height: 16), 
                           Text(
                             'Digite algo para pesquisar',
                             style: Theme.of(context).textTheme.headlineSmall,
@@ -95,7 +95,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   }
       
                   // Mensagem para quando a pesquisa não retorna resultados
-                  if (viewModel.searchResults.isEmpty) {
+                  if (viewModel.state.searchResults.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -104,14 +104,14 @@ class _SearchScreenState extends State<SearchScreen> {
                             Icons.movie_outlined,
                             size: 64,
                             color: Colors.grey,
-                          ), // Adicionado const
-                          const SizedBox(height: 16), // Adicionado const
+                          ), 
+                          const SizedBox(height: 16), 
                           Text(
                             'Nenhum filme encontrado',
                             style: Theme.of(context).textTheme.headlineSmall,
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 8), // Adicionado const
+                          const SizedBox(height: 8),
                           Text(
                             'Tente uma pesquisa diferente.',
                             style: Theme.of(context).textTheme.bodyMedium,
@@ -124,9 +124,9 @@ class _SearchScreenState extends State<SearchScreen> {
       
                   // Exibe a lista de resultados da pesquisa
                   return ListView.builder(
-                    itemCount: viewModel.searchResults.length,
+                    itemCount: viewModel.state.searchResults.length,
                     itemBuilder: (context, index) {
-                      final movie = viewModel.searchResults[index];
+                      final movie = viewModel.state.searchResults[index];
                       return MovieListItem(movie: movie);
                     },
                   );
