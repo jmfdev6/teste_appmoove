@@ -12,27 +12,29 @@ class Core extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  
-
     return MultiProvider(
       providers: [
         // Fornece o TMDBService
-        Provider(create: (_) => TMDBService()),
-        
+        Provider<TMDBService>(
+          create: (_) => TMDBService(),
+          dispose: (context, service) => service.dispose(),
+        ),
+
         // Fornece o MovieRepository, que depende do TMDBService
         ProxyProvider<TMDBService, MovieRepository>(
-          update: (_, tmdbService, __) => MovieRepository(tmdbService),
+          update: (_, service, __) => MovieRepository(service),
         ),
-        
+
         // Fornece o MovieViewModel, que depende do MovieRepository.
         // O `update` é chamado quando o MovieRepository está disponível.
         ChangeNotifierProxyProvider<MovieRepository, MovieViewModel>(
-
-          create: (context) => MovieViewModel(repository: Provider.of<MovieRepository>(context, listen: false)),
+          create: (context) => MovieViewModel(
+            repository: context.read<MovieRepository>(),
+          ),
           update: (context, repo, previousViewModel) {
-
             return MovieViewModel(repository: repo);
           },
+          
         ),
       ],
       child: MaterialApp.router(

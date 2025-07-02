@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:core';
+
 import 'package:flutter/material.dart';
+
 import '../models/movie.dart';
 import '../repositories/movie_repository.dart';
 import '../services/tmdb_services.dart';
@@ -17,9 +20,10 @@ class MovieState {
   final bool isLoading;
   final bool isLoadingMore;
   final bool isMovieDetailLoading;
-   Movie? get featuredMovie => popularMovies.isNotEmpty 
-      ? popularMovies.first 
-      : null;
+  final bool hasMore;
+
+  Movie? get featuredMovie =>
+      popularMovies.isNotEmpty ? popularMovies.first : null;
 
   MovieState({
     this.popularMovies = const [],
@@ -34,6 +38,7 @@ class MovieState {
     this.isLoading = false,
     this.isLoadingMore = false,
     this.isMovieDetailLoading = false,
+    this.hasMore = true,
   });
 
   MovieState copyWith({
@@ -49,6 +54,7 @@ class MovieState {
     bool? isLoading,
     bool? isLoadingMore,
     bool? isMovieDetailLoading,
+    bool? hasMore,
   }) {
     return MovieState(
       popularMovies: popularMovies ?? this.popularMovies,
@@ -63,6 +69,7 @@ class MovieState {
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       isMovieDetailLoading: isMovieDetailLoading ?? this.isMovieDetailLoading,
+      hasMore: hasMore ?? this.hasMore,
     );
   }
 }
@@ -75,7 +82,7 @@ class MovieViewModel extends ChangeNotifier {
   MovieState get state => _state;
 
   MovieViewModel({required MovieRepository repository})
-      : _repository = repository {
+    : _repository = repository {
     _init();
   }
 
@@ -104,31 +111,34 @@ class MovieViewModel extends ChangeNotifier {
 
   Future<void> loadPopularMovies({bool reset = true}) async {
     if (_state.isLoading || _state.isLoadingMore) return;
-    
-    _updateState(_state.copyWith(
-      isLoading: reset,
-      isLoadingMore: !reset,
-      errorMessage: null,
-    ));
+
+    _updateState(
+      _state.copyWith(
+        isLoading: reset,
+        isLoadingMore: !reset,
+        errorMessage: null,
+        hasMore: true,
+      ),
+    );
 
     try {
       final movies = await _repository.getPopularMovies(
         page: reset ? 1 : _state.currentPage + 1,
       );
-      
-      _updateState(_state.copyWith(
-        popularMovies: reset ? movies : [..._state.popularMovies, ...movies],
-        currentPage: reset ? 1 : _state.currentPage + 1,
-      ));
+
+      _updateState(
+        _state.copyWith(
+          popularMovies: reset ? movies : [..._state.popularMovies, ...movies],
+          currentPage: reset ? 1 : _state.currentPage + 1,
+          hasMore: movies.isNotEmpty,
+        ),
+      );
     } on TMDBException catch (e) {
-      _updateState(_state.copyWith(
-        errorMessage: 'Erro ao carregar filmes: ${e.message}',
-      ));
+      _updateState(
+        _state.copyWith(errorMessage: 'Erro ao carregar filmes: ${e.message}'),
+      );
     } finally {
-      _updateState(_state.copyWith(
-        isLoading: false,
-        isLoadingMore: false,
-      ));
+      _updateState(_state.copyWith(isLoading: false, isLoadingMore: false));
     }
   }
 
@@ -138,42 +148,48 @@ class MovieViewModel extends ChangeNotifier {
       return;
     }
 
-    _updateState(_state.copyWith(
-      isLoading: true,
-      errorMessage: null,
-    ));
+    _updateState(_state.copyWith(isLoading: true, errorMessage: null));
 
     try {
       final results = await _repository.searchMovies(query);
       _updateState(_state.copyWith(searchResults: results));
     } on TMDBException catch (e) {
-      _updateState(_state.copyWith(
-        errorMessage: 'Erro na pesquisa: ${e.message}',
-        searchResults: [],
-      ));
+      _updateState(
+        _state.copyWith(
+          errorMessage: 'Erro na pesquisa: ${e.message}',
+          searchResults: [],
+        ),
+      );
     } finally {
       _updateState(_state.copyWith(isLoading: false));
     }
   }
 
   Future<void> loadMovieDetails(int movieId) async {
-    _updateState(_state.copyWith(
-      isMovieDetailLoading: true,
-      movieDetailError: null,
-    ));
+    _updateState(
+      _state.copyWith(
+        isMovieDetailLoading: true,
+        movieDetailError: null,
+        currentMovieDetails: null,
+        currentMovieVideos: []
+      ),);
 
     try {
       final details = await _repository.getMovieDetails(movieId);
       final videos = await _repository.getMovieVideos(movieId);
-      
-      _updateState(_state.copyWith(
-        currentMovieDetails: details,
-        currentMovieVideos: videos,
-      ));
+
+      _updateState(
+        _state.copyWith(
+          currentMovieDetails: details,
+          currentMovieVideos: videos,
+        ),
+      );
     } on TMDBException catch (e) {
-      _updateState(_state.copyWith(
-        movieDetailError: 'Erro ao carregar detalhes: ${e.message}',
-      ));
+      _updateState(
+        _state.copyWith(
+          movieDetailError: 'Erro ao carregar detalhes: ${e.message}',
+        ),
+      );
     } finally {
       _updateState(_state.copyWith(isMovieDetailLoading: false));
     }
@@ -182,20 +198,20 @@ class MovieViewModel extends ChangeNotifier {
   Future<void> toggleFavorite(Movie movie) async {
     try {
       await _repository.toggleFavorite(movie);
-    } on TMDBException catch (e) {
-      _updateState(_state.copyWith(
-        errorMessage: 'Erro ao favoritar: ${e.message}',
-      ));
+    } on TMDBException {
+      _updateState(
+        _state.copyWith(errorMessage: 'Erro ao favoritar: \${e.message}'),
+      );
     }
   }
 
   Future<void> rateMovie(int movieId, double rating) async {
     try {
       await _repository.rateMovie(movieId, rating);
-    } on TMDBException catch (e) {
-      _updateState(_state.copyWith(
-        errorMessage: 'Erro ao avaliar: ${e.message}',
-      ));
+    } on TMDBException {
+      _updateState(
+        _state.copyWith(errorMessage: 'Erro ao avaliar: \${e.message}'),
+      );
     }
   }
 

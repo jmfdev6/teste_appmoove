@@ -1,7 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import 'package:go_router/go_router.dart';
 import '../models/movie.dart';
 import '../viewmodels/movie_viewmodel.dart';
 import '../core/utils/widgets/rating_widget.dart';
@@ -19,79 +20,60 @@ class MovieDetailsScreen extends StatefulWidget {
 
 class MovieDetailsScreenState extends State<MovieDetailsScreen> {
   YoutubePlayerController? _youtubeController;
-  bool _isPlayerInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _loadMovieDetails();
+    loadMovieDetails();
   }
 
-  void _loadMovieDetails() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  void loadMovieDetails() {
+    // CORREÇÃO: Adicionar o parâmetro Duration que é esperado
+    WidgetsBinding.instance.addPostFrameCallback((Duration timeStamp) {
       Provider.of<MovieViewModel>(context, listen: false)
           .loadMovieDetails(widget.movieId);
     });
   }
 
   void _initializeYoutubePlayer(List<Map<String, dynamic>> videos) {
-    // Evitar inicialização redundante
-    if (_isPlayerInitialized) return;
-    
-    try {
-      final trailer = videos.firstWhere(
-        (video) => video['type'] == 'Trailer' && video['site'] == 'YouTube',
-        orElse: () => {},
-      );
+    // Localiza trailer YouTube
+    final trailer = videos.firstWhere(
+      (video) => video['type'] == 'Trailer' && video['site'] == 'YouTube',
+      orElse: () => {},
+    );
 
-      if (trailer.isNotEmpty && trailer['key'] != null) {
-        final videoKey = trailer['key'] as String;
-        
-        // Reutilizar controller existente se possível
-        if (_youtubeController?.initialVideoId != videoKey) {
-          _youtubeController?.dispose();
-          _youtubeController = YoutubePlayerController(
-            initialVideoId: videoKey,
-            flags: const YoutubePlayerFlags(
-              autoPlay: false,
-              mute: false,
-            ),
-          );
-          _isPlayerInitialized = true;
-        }
-      } else if (_youtubeController != null) {
-        _cleanupYoutubeController();
+    if (trailer.isNotEmpty && trailer['key'] != null) {
+      final videoKey = trailer['key'] as String;
+      // Se controller inexistente ou vídeo diferente, (re)inicializa
+      if (_youtubeController == null || _youtubeController!.initialVideoId != videoKey) {
+        // descarta anterior
+        _youtubeController?.pause();
+        _youtubeController?.dispose();
+        _youtubeController = YoutubePlayerController(
+          initialVideoId: videoKey,
+          flags: const YoutubePlayerFlags(
+            autoPlay: false,
+            mute: false,
+          ),
+        );
       }
-    } catch (e) {
-      // Tratar exceções silenciosamente
-      _cleanupYoutubeController();
-    }
-  }
-
-  void _cleanupYoutubeController() {
-    if (_youtubeController != null) {
-      _youtubeController!.dispose();
+    } else {
+      // Sem trailer, descarta
+      _youtubeController?.pause();
+      _youtubeController?.dispose();
       _youtubeController = null;
     }
-    _isPlayerInitialized = false;
   }
 
   @override
   void dispose() {
-    _cleanupYoutubeController();
+    _youtubeController?.pause();
+    _youtubeController?.dispose();
     super.dispose();
   }
 
   Widget _buildErrorWidget(BuildContext context, String? error, MovieViewModel viewModel) {
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.close),
-          ),
-        ],
-      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -125,6 +107,7 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
   }
 
   Widget _buildMovieHeader(BuildContext context, Map<String, dynamic> movie, MovieViewModel viewModel) {
+    // CORREÇÃO: Remover markdown da URL do poster
     final posterUrl = movie['poster_path'] != null
         ? 'https://image.tmdb.org/t/p/w500${movie['poster_path']}'
         : '';
@@ -186,18 +169,18 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
                   final movieObj = Movie.fromJson(movie);
                   await viewModel.toggleFavorite(movieObj);
                 },
-                icon: Icon(viewModel.isFavorite(widget.movieId) 
-                    ? Icons.favorite 
+                icon: Icon(viewModel.isFavorite(widget.movieId)
+                    ? Icons.favorite
                     : Icons.favorite_border),
-                label: Text(viewModel.isFavorite(widget.movieId) 
-                    ? 'Favorito' 
+                label: Text(viewModel.isFavorite(widget.movieId)
+                    ? 'Favorito'
                     : 'Favoritar'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: viewModel.isFavorite(widget.movieId) 
-                      ? Colors.red 
+                  backgroundColor: viewModel.isFavorite(widget.movieId)
+                      ? Colors.red
                       : null,
-                  foregroundColor: viewModel.isFavorite(widget.movieId) 
-                      ? Colors.white 
+                  foregroundColor: viewModel.isFavorite(widget.movieId)
+                      ? Colors.white
                       : null,
                 ),
               ),
@@ -219,7 +202,7 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
           );
         }
 
-        if (viewModel.state.movieDetailError!= null || 
+        if (viewModel.state.movieDetailError != null ||
             viewModel.state.currentMovieDetails == null) {
           return _buildErrorWidget(
             context,
@@ -231,10 +214,10 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
         final movie = viewModel.state.currentMovieDetails!;
         final videos = viewModel.state.currentMovieVideos;
 
-        // Inicializa o player apenas uma vez quando os vídeos estão disponíveis
-        if (videos.isNotEmpty && !_isPlayerInitialized && mounted) {
+        // Atualiza o player sempre que vídeos mudam
+        WidgetsBinding.instance.addPostFrameCallback((Duration timeStamp) {
           _initializeYoutubePlayer(videos);
-        }
+        });
 
         final backdropUrl = movie['backdrop_path'] != null
             ? 'https://image.tmdb.org/t/p/w780${movie['backdrop_path']}'
@@ -281,7 +264,6 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
                     children: [
                       _buildMovieHeader(context, movie, viewModel),
                       const SizedBox(height: 24),
-                      
                       if (movie['genres'] != null && (movie['genres'] as List).isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,7 +285,6 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
                             const SizedBox(height: 24),
                           ],
                         ),
-                      
                       if (movie['overview'] != null && movie['overview'].isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +303,6 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
                             const SizedBox(height: 24),
                           ],
                         ),
-                      
                       if (_youtubeController != null)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,15 +318,12 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
                               controller: _youtubeController!,
                               showVideoProgressIndicator: true,
                               onEnded: (_) {
-                                if (mounted) {
-                                  _youtubeController?.seekTo(Duration.zero);
-                                }
+                                _youtubeController?.seekTo(Duration.zero);
                               },
                             ),
                             const SizedBox(height: 24),
                           ],
                         ),
-                      
                       RatingWidget(
                         movieId: widget.movieId,
                         initialRating: viewModel.getMovieRating(widget.movieId),

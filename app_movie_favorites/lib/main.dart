@@ -6,7 +6,11 @@ import 'models/movie.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('Erro ao carregar .env: \$e');
+  }
   await Hive.initFlutter();
   Hive.registerAdapter(MovieAdapter());
   if (!Hive.isBoxOpen('favorites')) {

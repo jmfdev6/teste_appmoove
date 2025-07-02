@@ -10,7 +10,8 @@ class TMDBService {
   factory TMDBService() => _instance;
 
   TMDBService._internal()
-      : _dio = Dio(BaseOptions(
+    : _dio = Dio(
+        BaseOptions(
           baseUrl: dotenv.env['API_URL']!,
           queryParameters: {
             'api_key': dotenv.env['API_KEY']!,
@@ -18,7 +19,8 @@ class TMDBService {
           },
           connectTimeout: const Duration(seconds: 10),
           receiveTimeout: const Duration(seconds: 15),
-        )) {
+        ),
+      ) {
     _dio.interceptors.add(LogInterceptor(responseBody: false));
   }
 
@@ -67,6 +69,10 @@ class TMDBService {
         .map((json) => Movie.fromJson(json))
         .toList();
   }
+
+  void dispose() {
+    _dio.close();
+  }
 }
 
 class TMDBException implements Exception {
@@ -83,5 +89,6 @@ class TMDBException implements Exception {
   }
 
   @override
-  String toString() => 'TMDBException: $message${statusCode != null ? ' ($statusCode)' : ''}';
+  String toString() =>
+      'TMDBException: $message${statusCode != null ? ' ($statusCode)' : ''}';
 }
