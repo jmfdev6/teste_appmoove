@@ -7,12 +7,12 @@ import '../routes/app_routes.dart';
 class FeaturedMovieCard extends StatelessWidget {
   final Movie movie;
   
-  const FeaturedMovieCard({Key? key, required this.movie}) : super(key: key);
+  const FeaturedMovieCard({super.key, required this.movie});
   
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.go('${AppRouter.movieDetails}/${movie.id}'),
+      onTap: () => context.push('${AppRouter.movieDetails}/${movie.id}'),
       child: Container(
         height: 200,
         margin: EdgeInsets.all(16),
@@ -20,6 +20,7 @@ class FeaturedMovieCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
+              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.3),
               blurRadius: 10,
               offset: Offset(0, 5),
@@ -58,6 +59,7 @@ class FeaturedMovieCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
+                      // ignore: deprecated_member_use
                       Colors.black.withOpacity(0.7),
                     ],
                   ),

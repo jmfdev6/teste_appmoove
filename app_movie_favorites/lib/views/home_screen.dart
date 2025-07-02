@@ -1,110 +1,138 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
-import '../core/utils/routes/app_routes.dart' show AppRouter;
+import 'package:go_router/go_router.dart'; // Importe GoRouter para context.go
+import '../core/utils/routes/app_routes.dart';
 import '../core/utils/widgets/featured_movie_card.dart';
 import '../core/utils/widgets/movie_card.dart' show MovieCard;
 import '../viewmodels/movie_viewmodel.dart';
 
-
+/// Tela inicial que exibe filmes populares e um filme em destaque.
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key}); // Adicione const constructor
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
   @override
+  void initState() {
+    super.initState();
+    // Garante que o ViewModel seja acessado após o build inicial
+    // e que os filmes populares sejam carregados uma vez.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MovieViewModel>(context, listen: false).loadPopularMovies();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Filmes Populares'),
+        title: const Text('Filmes Populares'), 
         actions: [
           IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () => context.go(AppRouter.search),
+            icon: const Icon(Icons.search), 
+            onPressed: () => context.push(AppRouter.search),
           ),
           IconButton(
-            icon: Icon(Icons.favorite),
-            onPressed: () => context.go(AppRouter.favorites),
+            icon: const Icon(Icons.favorite), 
+            onPressed: () => context.push(AppRouter.favorites),
           ),
         ],
       ),
       body: Consumer<MovieViewModel>(
         builder: (context, viewModel, child) {
+          // Exibe um indicador de carregamento inicial se não houver dados ainda
           if (viewModel.isLoading && viewModel.popularMovies.isEmpty) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator()); 
           }
-          
-          if (viewModel.error != null && viewModel.popularMovies.isEmpty) {
+
+          // Exibe mensagem de erro se houver um erro e nenhuma lista de filmes
+          if (viewModel.errorMessage != null && viewModel.popularMovies.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  SizedBox(height: 16),
-                  Text(
-                    'Erro ao carregar filmes',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  SizedBox(height: 8),
-                  Text(viewModel.error!),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => viewModel.loadPopularMovies(),
-                    child: Text('Tentar novamente'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(16.0), 
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red), 
+                    const SizedBox(height: 16), 
+                    Text(
+                      'Erro ao carregar filmes',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8), 
+                    Text(
+                      viewModel.errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 16), // Adicione const
+                    ElevatedButton.icon( // Use ElevatedButton.icon para melhor UX
+                      onPressed: () => viewModel.loadPopularMovies(),
+                      icon: const Icon(Icons.refresh), // Adicione const
+                      label: const Text('Tentar novamente'), // Adicione const
+                    ),
+                  ],
+                ),
               ),
             );
           }
-          
+
+          // Exibe mensagem de "nenhum filme encontrado" se a lista estiver vazia após carregamento
           if (viewModel.popularMovies.isEmpty) {
-            return Center(
-              child: Text('Nenhum filme encontrado'),
+            return const Center( 
+              child: Text('Nenhum filme encontrado.'), 
             );
           }
-          
+
+          // Conteúdo principal da tela
           return RefreshIndicator(
             onRefresh: () => viewModel.loadPopularMovies(),
             child: SingleChildScrollView(
-              physics: AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(), 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Filme em destaque
                   if (viewModel.featuredMovie != null)
                     FeaturedMovieCard(movie: viewModel.featuredMovie!),
-                  
-                  SizedBox(height: 24),
-                  
+
+                  const SizedBox(height: 24), 
+
+                  // Título da seção "Populares"
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16), 
                     child: Text(
                       'Populares',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ),
-                  
-                  SizedBox(height: 12),
-                  
+
+                  const SizedBox(height: 12), 
+
+                  // Lista horizontal de filmes populares
                   SizedBox(
-                    height: 280,
+                    height: 280, // Altura fixa para a lista horizontal
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16), 
                       itemCount: viewModel.popularMovies.length,
                       itemBuilder: (context, index) {
                         final movie = viewModel.popularMovies[index];
                         return Padding(
-                          padding: EdgeInsets.only(right: 12),
+                          padding: const EdgeInsets.only(right: 12), 
                           child: MovieCard(movie: movie),
                         );
                       },
                     ),
                   ),
-                  
-                  SizedBox(height: 20),
+
+                  const SizedBox(height: 20), 
                 ],
               ),
             ),

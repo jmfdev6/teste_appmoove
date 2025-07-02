@@ -8,21 +8,30 @@ import '../viewmodels/movie_viewmodel.dart';
 import 'utils/app_theme.dart';
 
 class Core extends StatelessWidget {
-  const Core({Key? key}) : super(key: key);
+  const Core({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Hive já inicializado em main
 
     return MultiProvider(
       providers: [
+        // Fornece o TMDBService
         Provider(create: (_) => TMDBService()),
+        
+        // Fornece o MovieRepository, que depende do TMDBService
         ProxyProvider<TMDBService, MovieRepository>(
-          update: (_, api, __) => MovieRepository(api),
+          update: (_, tmdbService, __) => MovieRepository(tmdbService),
         ),
+        
+        // Fornece o MovieViewModel, que depende do MovieRepository.
+        // O `update` é chamado quando o MovieRepository está disponível.
         ChangeNotifierProxyProvider<MovieRepository, MovieViewModel>(
-          create: (_) => MovieViewModel(),
-          update: (_, repo, vm) => vm!..updateRepository(repo),
+
+          create: (context) => MovieViewModel(repository: Provider.of<MovieRepository>(context, listen: false)),
+          update: (context, repo, previousViewModel) {
+
+            return MovieViewModel(repository: repo);
+          },
         ),
       ],
       child: MaterialApp.router(

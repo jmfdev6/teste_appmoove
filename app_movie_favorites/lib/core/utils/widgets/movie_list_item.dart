@@ -9,21 +9,21 @@ import '../routes/app_routes.dart';
 class MovieListItem extends StatelessWidget {
   final Movie movie;
   
-  const MovieListItem({Key? key, required this.movie}) : super(key: key);
+  const MovieListItem({super.key, required this.movie});
   
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
-        onTap: () => context.go('${AppRouter.movieDetails}/${movie.id}'),
+        onTap: () => context.push('${AppRouter.movieDetails}/${movie.id}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: EdgeInsets.all(12),
           child: Row(
             children: [
               // Poster
-              Container(
+              SizedBox(
                 width: 80,
                 height: 120,
                 child: ClipRRect(

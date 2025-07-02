@@ -6,11 +6,11 @@ class RatingWidget extends StatefulWidget {
   final Function(double) onRatingUpdate;
   
   const RatingWidget({
-    Key? key,
+    super.key,
     required this.movieId,
     this.initialRating,
     required this.onRatingUpdate,
-  }) : super(key: key);
+  });
   
   @override
   _RatingWidgetState createState() => _RatingWidgetState();

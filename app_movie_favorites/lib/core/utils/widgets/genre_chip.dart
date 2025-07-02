@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class GenreChip extends StatelessWidget {
   final String genreName;
   
-  const GenreChip({Key? key, required this.genreName}) : super(key: key);
+  const GenreChip({super.key, required this.genreName});
   
   @override
   Widget build(BuildContext context) {

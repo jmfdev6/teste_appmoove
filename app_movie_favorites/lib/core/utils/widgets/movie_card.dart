@@ -9,20 +9,20 @@ import '../routes/app_routes.dart';
 class MovieCard extends StatelessWidget {
   final Movie movie;
   
-  const MovieCard({Key? key, required this.movie}) : super(key: key);
+  const MovieCard({super.key, required this.movie});
   
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.go('${AppRouter.movieDetails}/${movie.id}'),
-      child: Container(
+      onTap: () => context.push('${AppRouter.movieDetails}/${movie.id}'),
+      child: SizedBox(
         width: 140,
         child: Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Poster
-              Container(
+              SizedBox(
                 height: 200,
                 width: double.infinity,
                 child: ClipRRect(
