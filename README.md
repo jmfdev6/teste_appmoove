@@ -143,38 +143,4 @@ Este projeto está licenciado sob a **Licença MIT**. Veja o arquivo [LICENSE](L
 
 ---
 
-## 🤝 Contribuição
 
-Contribuições são bem-vindas! Siga os passos:
-
-1. Faça um fork do projeto
-2. Crie sua branch:
-   ```bash
-   ```
-
-git checkout -b feature/nova-feature
-
-````
-3. Faça commit das suas alterações:
-```bash
-git commit -m "Adiciona nova feature"
-````
-
-4. Faça push para a branch:
-   ```bash
-   ```
-
-git push origin feature/nova-feature
-
-```
-5. Abra um Pull Request
-
----
-
-## 📫 Contato
-
-**José Mário** – [@jmfdev6](https://github.com/jmfdev6) – josefigueiredoroot62@gmail.com
-
-Projeto Link: https://github.com/jmfdev6/teste_appmoove.git
-
-```
