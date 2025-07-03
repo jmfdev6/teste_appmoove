@@ -204,13 +204,14 @@ Projeto Link: https://github.com/jmfdev6/teste_appmoove.git
 
 ## 📸 Screenshots
 
-![WhatsApp Image 2025-07-03 at 03 09 24](https://github.com/user-attachments/assets/57bb8f21-4249-413e-a874-1ff35ab7a5f1)
-![WhatsApp Image 2025-07-03 at 03 09 23 (2)](https://github.com/user-attachments/assets/1ce358b1-6ccf-4fb0-a969-0ddba90d7b33)
-![WhatsApp Image 2025-07-03 at 03 09 23 (1)](https://github.com/user-attachments/assets/87742d6f-04cb-40c3-a20f-0c6525190151)
-![WhatsApp Image 2025-07-03 at 03 09 23](https://github.com/user-attachments/assets/33ca8d2b-1d1e-4843-ae32-147a96f7beca)
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/f43c4986-2e52-42d4-98e9-2d1628b16c9a" width="30%" alt="Splash" />
+  <img src="https://github.com/user-attachments/assets/bfbecf8e-c838-4929-9fa3-425279d2e4f6" width="30%" alt="Home" />
+  <img src="https://github.com/user-attachments/assets/99221a9a-e7ba-476d-b6d0-3cafc989a908" width="30%" alt="Details" />
+  <img src="https://github.com/user-attachments/assets/5add5ff5-cab7-43b4-8e6b-80ca80c3a03d" width="30%" alt="Search" />
+  <img src="https://github.com/user-attachments/assets/14e2c995-4fe7-4980-a55c-c2ddd7278adf"width="30%" alt="Favorites" />
+</div>
 
-
----
 
 ## ⚙️ Otimizações
 
@@ -224,9 +225,8 @@ Projeto Link: https://github.com/jmfdev6/teste_appmoove.git
 
 ## 📝 Licença
 
-Este projeto está licenciado sob a **Licença MIT**. Veja o arquivo [LICENSE](LICENSE) para detalhes.
+- Este projeto está licenciado sob a **Licença MIT**. Veja o arquivo [LICENSE](LICENSE) para detalhes.
 
----
->>>>>>> temp-branch
+
 
 
