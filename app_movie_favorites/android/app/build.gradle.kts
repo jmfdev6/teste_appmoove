@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.app_movie_favorites"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+     ndkVersion = "27.0.12077973"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -29,7 +29,6 @@ android {
         versionName = flutter.versionName
     }
 
-
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
@@ -38,7 +37,6 @@ android {
         }
     }
 }
-
 
 flutter {
     source = "../.."

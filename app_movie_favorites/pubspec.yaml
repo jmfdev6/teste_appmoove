@@ -40,15 +40,16 @@ dependencies:
   go_router: ^16.0.0
   dio: ^5.8.0+1
   flutter_dotenv: ^5.2.1
-  youtube_player_flutter: ^9.1.1
   hive_generator: ^2.0.1
   build_runner: ^2.5.4
   cached_network_image: ^3.4.1
   equatable: ^2.0.7
   mockito: ^5.4.5
+  video_player: ^2.10.0
+  youtube_player_flutter: ^9.1.1
+  flutter_native_splash: ^2.4.6
 
 dev_dependencies:
-  flutter_native_splash: ^2.2.16
   flutter_test:
     sdk: flutter
 
@@ -74,14 +75,8 @@ flutter:
   assets:
      - .env
      - assets/images/logo.png
-flutter_native_splash:
-  color: "#0d47a1" # cor de fundo da splash
-  image: assets/images/logo.png
-  android: true
-  ios: true
-  web: false
-  android_gravity: center
-  ios_content_mode: scaleAspectFill 
+     - assets/images/logo1.png
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -108,3 +103,22 @@ flutter_native_splash:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_native_splash:
+  # A cor de fundo do seu splash. Use o código hexadecimal da sua marca.
+  color: "#121212" # Um cinza escuro, por exemplo
+
+  # A imagem que aparecerá no centro.
+  # Lembre-se de criar esta pasta e colocar o arquivo de imagem lá.
+  image: assets/images/logo1.png
+
+  # (Opcional) Cor e imagem para o modo escuro
+  color_dark: "#121212"
+  image_dark: assets/images/logo1.png
+
+  # Configuração específica para o Android 12+, que usa um ícone central.
+  # É altamente recomendado fornecer um ícone separado aqui.
+  android_12:
+    image: assets/images/logo.png
+    color: "#121212"
+    image_dark: assets/images/logo1.png
+    color_dark: "#121212"

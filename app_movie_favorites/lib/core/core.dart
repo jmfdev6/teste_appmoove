@@ -1,5 +1,6 @@
 import 'package:app_movie_favorites/core/utils/routes/app_routes.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:provider/provider.dart';
 import '../repositories/movie_repository.dart';
 
@@ -12,6 +13,7 @@ class Core extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+     FlutterNativeSplash.remove();
     return MultiProvider(
       providers: [
         // Fornece o TMDBService
