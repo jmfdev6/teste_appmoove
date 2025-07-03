@@ -1,70 +1,3 @@
-<<<<<<< HEAD
-Movie Favorites App
-Um aplicativo Flutter para explorar filmes populares, gerenciar favoritos e descobrir novos títulos. Desenvolvido com arquitetura limpa e gerenciamento de estado eficiente.
-
-Recursos Principais
-🎬 Listagem de filmes populares
-
-⭐ Sistema de favoritos offline
-
-🔍 Busca avançada de filmes
-
-📺 Player de trailers integrado
-
-🌗 Suporte a tema claro/escuro
-
-💾 Cache inteligente de imagens e dados
-
-Tecnologias Utilizadas
-Flutter - Framework principal
-
-Provider - Gerenciamento de estado
-
-Hive - Armazenamento local
-
-Dio - Cliente HTTP
-
-Youtube Player - Player de vídeos
-
-Cached Network Image - Cache de imagens
-
-GoRouter - Navegação avançada
-
-Equatable - Igualdade de objetos
-
-RxDart - Programação reativa
-
-Como Executar
-
-Clone o repositório
-
-bash
-git clone https://github.com/jmfdev6/teste_appmoove.git
-cd app_movie_favorites
-Instale as dependências
-
-bash
-flutter pub get
-Configure as variáveis de ambiente
-Crie um arquivo .env na raiz do projeto:
-
-env
-API_URL=https://api.themoviedb.org/3
-API_KEY=sua_chave_tmdb_aqui
-Execute o aplicativo
-
-bash
-flutter run
-Estrutura do Projeto
-text
-lib/
-├── core/
-│   ├── models/           # Modelos de dados
-│   ├── repositories/     # Camada de acesso a dados
-│   ├── services/         # Serviços externos
-│   ├── utils/            # Utilitários e widgets
-│   └── viewmodels/       # Lógica de apresentação
-=======
 # Movie Favorites App
 
 Um aplicativo Flutter para explorar filmes populares, gerenciar favoritos e descobrir novos títulos. Desenvolvido com arquitetura limpa e gerenciamento de estado eficiente.
@@ -271,7 +204,11 @@ Projeto Link: https://github.com/jmfdev6/teste_appmoove.git
 
 ## 📸 Screenshots
 
-&#x20;&#x20;
+![WhatsApp Image 2025-07-03 at 03 09 24](https://github.com/user-attachments/assets/57bb8f21-4249-413e-a874-1ff35ab7a5f1)
+![WhatsApp Image 2025-07-03 at 03 09 23 (2)](https://github.com/user-attachments/assets/1ce358b1-6ccf-4fb0-a969-0ddba90d7b33)
+![WhatsApp Image 2025-07-03 at 03 09 23 (1)](https://github.com/user-attachments/assets/87742d6f-04cb-40c3-a20f-0c6525190151)
+![WhatsApp Image 2025-07-03 at 03 09 23](https://github.com/user-attachments/assets/33ca8d2b-1d1e-4843-ae32-147a96f7beca)
+
 
 ---
 
