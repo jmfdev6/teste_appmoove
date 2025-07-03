@@ -1,5 +1,6 @@
+import 'dart:ui'; // ADICIONADO: Para o efeito de blur
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // ADICIONADO: Para controlar a UI e orientação
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../models/movie.dart';
@@ -21,9 +22,10 @@ class MovieDetailsScreen extends StatefulWidget {
 }
 
 class MovieDetailsScreenState extends State<MovieDetailsScreen> {
+  // --- TODA A LÓGICA PERMANECE A MESMA ---
   YoutubePlayerController? _youtubeController;
   String? _initializedVideoKey;
-  bool _isPlayerFullScreen = false; // ADICIONADO: Estado de tela cheia
+  bool _isPlayerFullScreen = false;
 
   @override
   void initState() {
@@ -62,7 +64,7 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
   @override
   void dispose() {
     _disposePlayer();
-    _exitFullScreen(); // Garante que a UI do sistema volte ao normal
+    _exitFullScreen();
     super.dispose();
   }
 
@@ -72,10 +74,8 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
     _youtubeController = null;
   }
 
-  // Listener para gerenciar a entrada e saída da tela cheia de forma suave
   Future<void> _fullScreenListener() async {
     if (_youtubeController == null) return;
-    
     if (_youtubeController!.value.isFullScreen != _isPlayerFullScreen) {
       if (_youtubeController!.value.isFullScreen) {
         await _enterFullScreen();
@@ -113,7 +113,6 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
         enableCaption: false,
       ),
     )..addListener(_fullScreenListener);
-
     if (mounted) {
       setState(() {
         _initializedVideoKey = key;
@@ -132,7 +131,9 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
       orElse: () => validVideos.first,
     )['key'];
   }
+  // --- FIM DA LÓGICA ---
 
+  // ✅ --- INÍCIO DA NOVA UI --- ✅
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<MovieViewModel>();
@@ -143,14 +144,13 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
         controller: _youtubeController ?? YoutubePlayerController(initialVideoId: ''),
       ),
       builder: (context, player) {
-        // ignore: deprecated_member_use
-        return WillPopScope(
-          onWillPop: () async {
+        return PopScope(
+          canPop: !_isPlayerFullScreen,
+          onPopInvoked: (didPop) {
+            if (didPop) return;
             if (_isPlayerFullScreen) {
               _youtubeController?.toggleFullScreenMode();
-              return false;
             }
-            return true;
           },
           child: Scaffold(
             body: _isPlayerFullScreen
@@ -162,123 +162,218 @@ class MovieDetailsScreenState extends State<MovieDetailsScreen> {
     );
   }
 
-  // Widget que constrói a UI normal da tela (não-tela cheia)
-Widget _buildNormalUI(MovieViewModel vm, String? trailerKey, Widget player) {
-  final state = vm.state;
-  if (state.isMovieDetailLoading || !vm.isMovieDataValid(widget.movieId)) {
-    return const Center(child: CircularProgressIndicator());
-  }
-  if (state.movieDetailError != null) {
-    return _buildErrorWidget(context, state.movieDetailError, vm);
-  }
-  final movie = state.currentMovieDetails!;
-  final backdropPath = movie['backdrop_path'] as String?;
-  final backdropUrl = backdropPath?.isNotEmpty == true
-      ? '$_kTmdbImageBaseUrl$_kBackdropSize$backdropPath'
-      : null;
-  return CustomScrollView(
-    slivers: [
-      SliverAppBar(
-        expandedHeight: 300,
-        pinned: true,
-        actions: [
-          IconButton(
-            icon: Icon(vm.isFavorite(widget.movieId) ? Icons.favorite : Icons.favorite_border, size: 30),
-            color: vm.isFavorite(widget.movieId) ? Colors.redAccent : Colors.white,
-            onPressed: () => vm.toggleFavorite(Movie.fromJson(movie)),
-          )
+  Widget _buildNormalUI(MovieViewModel vm, String? trailerKey, Widget player) {
+    final state = vm.state;
+    if (state.isMovieDetailLoading || !vm.isMovieDataValid(widget.movieId)) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.movieDetailError != null) {
+      return _buildErrorWidget(context, state.movieDetailError, vm);
+    }
+    
+    final movie = state.currentMovieDetails!;
+    final backdropPath = movie['backdrop_path'] as String?;
+    final backdropUrl = backdropPath?.isNotEmpty == true
+        ? '$_kTmdbImageBaseUrl$_kBackdropSize$backdropPath'
+        : null;
+
+    // A UI agora é um Stack para o efeito de fundo
+    return Stack(
+      children: [
+        // 1. O fundo com blur
+        if (backdropUrl != null) ...[
+          Positioned.fill(
+            child: CachedNetworkImage(
+              imageUrl: backdropUrl,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Container(
+                color: Colors.black.withOpacity(0.6),
+              ),
+            ),
+          ),
         ],
-        flexibleSpace: FlexibleSpaceBar(
-          title: Text(movie['title'] as String? ?? '', style: const TextStyle(fontWeight: FontWeight.bold, shadows: [Shadow(offset: Offset(1.0, 1.0), blurRadius: 3.0, color: Colors.black54)])),
-          background: backdropUrl != null
-              ? CachedNetworkImage(imageUrl: backdropUrl, fit: BoxFit.cover, errorWidget: (c, u, e) => Container(color: Colors.grey[300], child: const Icon(Icons.error, color: Colors.grey)))
-              : Container(color: Colors.grey[300], child: const Icon(Icons.movie, size: 48, color: Colors.grey)),
-        ),
+
+        // 2. Conteúdo rolável sobre o fundo
+        CustomScrollView(
+          slivers: [
+            // AppBar transparente com botões de voltar e favoritar
+            SliverAppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              pinned: true,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(vm.isFavorite(widget.movieId) ? Icons.favorite : Icons.favorite_border, size: 28),
+                  color: vm.isFavorite(widget.movieId) ? Colors.redAccent : Colors.white,
+                  onPressed: () => vm.toggleFavorite(Movie.fromJson(movie)),
+                )
+              ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildMovieHeader(context, movie), // Header redesenhado
+                    const SizedBox(height: 24),
+                    if ((movie['genres'] as List).isNotEmpty) ...[
+                      _buildSectionTitle('Gêneros'),
+                      const SizedBox(height: 8),
+                      Wrap(spacing: 8, runSpacing: 8, children: (movie['genres'] as List).map((g) => GenreChip(genreName: g['name'] ?? '')).toList()),
+                      const SizedBox(height: 24),
+                    ],
+                    if (trailerKey != null) ...[
+                      _buildSectionTitle('Trailer'),
+                      const SizedBox(height: 12),
+                      _buildTrailerSection(trailerKey, player),
+                      const SizedBox(height: 24),
+                    ],
+                    if ((movie['overview'] as String).isNotEmpty) ...[
+                      _buildSectionTitle('Sinopse'),
+                      const SizedBox(height: 8),
+                      Text(movie['overview'] as String, style: TextStyle(color: Colors.white.withOpacity(0.8), height: 1.5, fontSize: 15)),
+                      const SizedBox(height: 24),
+                    ],
+                    const SizedBox(height: 8),
+                    RatingWidget(
+                      movieId: widget.movieId,
+                      initialRating: vm.getMovieRating(widget.movieId),
+                      onRatingUpdate: (r) => vm.rateMovie(widget.movieId, r),
+                    ),
+                    const SizedBox(height: 40), // Espaço extra no final
+                  ],
+                ),
+              ),
+            )
+          ],
+        )
+      ],
+    );
+  }
+
+  // Widget helper para os títulos das seções
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
       ),
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          // ✅ CORREÇÃO: O 'SingleChildScrollView' foi REMOVIDO daqui.
+    );
+  }
+  
+  // Header redesenhado para a nova UI
+  Widget _buildMovieHeader(BuildContext context, Map<String, dynamic> movie) {
+    final posterPath = movie['poster_path'] as String?;
+    final posterUrl = posterPath?.isNotEmpty == true
+        ? '$_kTmdbImageBaseUrl$_kPosterSize$posterPath'
+        : null;
+    final releaseDate = movie['release_date'] as String?;
+    final rating = movie['vote_average'];
+    final voteCount = movie['vote_count'];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 140,
+          height: 210,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: posterUrl != null
+                ? CachedNetworkImage(imageUrl: posterUrl, fit: BoxFit.cover)
+                : Container(color: Colors.grey[800], child: const Icon(Icons.movie, color: Colors.white24)),
+          ),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildMovieHeader(context, movie),
-              const SizedBox(height: 24),
-              if (trailerKey != null) ...[
-                Text('Trailer', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                _buildTrailerSection(trailerKey, player),
-                const SizedBox(height: 24),
-              ],
-              if (movie['genres'] != null && (movie['genres'] as List).isNotEmpty) ...[
-                Text('Gêneros', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Wrap(spacing: 8, runSpacing: 8, children: (movie['genres'] as List).map((g) => GenreChip(genreName: g['name'] ?? '')).toList()),
-                const SizedBox(height: 24),
-              ],
-              if (movie['overview'] != null && (movie['overview'] as String).isNotEmpty) ...[
-                Text('Sinopse', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text(movie['overview'] as String, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5)),
-                const SizedBox(height: 24),
-              ],
-              RatingWidget(
-                movieId: widget.movieId,
-                initialRating: vm.getMovieRating(widget.movieId),
-                onRatingUpdate: (r) => vm.rateMovie(widget.movieId, r),
+              const SizedBox(height: 10), // Alinhamento vertical
+              Text(
+                movie['title'] as String? ?? 'Título não disponível',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+              const SizedBox(height: 12),
+              if (releaseDate != null && releaseDate.isNotEmpty)
+                _buildInfoRow(Icons.calendar_today_outlined, 'Lançamento: $releaseDate'),
+              const SizedBox(height: 8),
+              if (rating != null && rating > 0)
+                _buildInfoRow(Icons.star_rate_rounded, '${rating.toStringAsFixed(1)}/10 (${voteCount ?? 0} votos)'),
             ],
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
+  // Widget helper para as linhas de informação (data, avaliação)
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white70, size: 16),
+        const SizedBox(width: 8),
+        Expanded(child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 14))),
+      ],
+    );
+  }
+
+  // O resto dos widgets (trailer, erro) permanecem iguais
   Widget _buildTrailerSection(String trailerKey, Widget player) {
     if (_youtubeController != null && _initializedVideoKey == trailerKey) {
-      return Container(
-        // ✅ CORREÇÃO: 'withOpacity' substituído
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withAlpha((255 * 0.3).round()), blurRadius: 8, offset: const Offset(0, 4))]),
-        child: ClipRRect(borderRadius: BorderRadius.circular(8), child: player),
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: player,
       );
     }
     return GestureDetector(
       onTap: () => _initializePlayer(trailerKey),
-      child: Container(
-        // ✅ CORREÇÃO: 'withOpacity' substituído
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withAlpha((255 * 0.3).round()), blurRadius: 8, offset: const Offset(0, 4))]),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CachedNetworkImage(
-                  imageUrl: 'https://img.youtube.com/vi/$trailerKey/maxresdefault.jpg',
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  errorWidget: (context, url, error) => Container(color: Colors.grey[300], child: const Icon(Icons.error, color: Colors.grey)),
-                ),
-                // ✅ CORREÇÃO: 'withOpacity' substituído
-                Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Colors.transparent, Colors.black.withAlpha((255 * 0.7).round())]))),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.play_circle_outline, size: 64, color: Colors.white),
-                    SizedBox(height: 8),
-                    Text('Ver trailer', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ],
-            ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CachedNetworkImage(
+                imageUrl: 'https://img.youtube.com/vi/$trailerKey/maxresdefault.jpg',
+                fit: BoxFit.cover,
+                width: double.infinity,
+              ),
+              Container(color: Colors.black.withOpacity(0.3)),
+              const Icon(Icons.play_circle_fill, size: 64, color: Colors.white),
+            ],
           ),
         ),
       ),
     );
   }
-
   Widget _buildErrorWidget(BuildContext context, String? error, MovieViewModel vm) {
     return Scaffold(
       appBar: AppBar(title: const Text('Erro')),
@@ -306,61 +401,5 @@ Widget _buildNormalUI(MovieViewModel vm, String? trailerKey, Widget player) {
     );
   }
 
-// Widget para o cabeçalho com o pôster e informações
-Widget _buildMovieHeader(BuildContext context, Map<String, dynamic> movie) {
-  final posterPath = movie['poster_path'] as String?;
-  final posterUrl = posterPath?.isNotEmpty == true
-      ? '$_kTmdbImageBaseUrl$_kPosterSize$posterPath'
-      : null;
-  final releaseDate = movie['release_date'] as String?;
-  final rating = movie['vote_average'];
-  final voteCount = movie['vote_count'];
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        width: 120,
-        height: 180,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black.withAlpha((255 * 0.3).round()), blurRadius: 8, offset: const Offset(0, 4))]),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: posterUrl != null
-              ? CachedNetworkImage(imageUrl: posterUrl, fit: BoxFit.cover, errorWidget: (context, url, error) => Container(color: Colors.grey[300], child: const Icon(Icons.movie, color: Colors.grey)))
-              : Container(color: Colors.grey[300], child: const Icon(Icons.movie, color: Colors.grey)),
-        ),
-      ),
-      const SizedBox(width: 16),
-      Expanded(
-        // ✅ CORREÇÃO: O 'SingleChildScrollView' também foi REMOVIDO daqui.
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(movie['title'] as String? ?? 'Título não disponível', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            if (releaseDate != null && releaseDate.isNotEmpty) ...[
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text('Lançamento: $releaseDate', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
-            if (rating != null && rating > 0) ...[
-              Row(
-                children: [
-                  const Icon(Icons.star, size: 16, color: Colors.amber),
-                  const SizedBox(width: 4),
-                  Text('${rating.toStringAsFixed(1)}/10', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
-                  if (voteCount != null) ...[const SizedBox(width: 4), Text('($voteCount votos)', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]))],
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    ],
-  );
-}
+
 }
